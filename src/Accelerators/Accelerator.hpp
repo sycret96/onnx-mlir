@@ -26,6 +26,8 @@
 
 // TODO: Remove NNPA from this header
 #include "src/Accelerators/NNPA/Compiler/NNPACompilerOptions.hpp"
+// TODO: Remove MQ from this header
+#include "src/Accelerators/MQ/Compiler/MQCompilerOptions.hpp"
 
 // Define the macros used to generate various accelerators artifacts (via the
 // use of the APPLY_TO_ACCELERATORS macro, which is defined in the cmake
