@@ -12,7 +12,7 @@ add_onnx_mlir_library(OMMQHighOps
   # Please list in the alphabetical order.
 #   MQHighOps/Conv2D/Conv2D.cpp
 #   MQHighOps/Elementwise/Elementwise.cpp
-#   MQHighOps/MatMul/MatMul.cpp
+  MQHighOps/MatMul/MatMul.cpp
 #   MQHighOps/Pooling/Pooling.cpp
 #   MQHighOps/Reshape/Reshape.cpp
 #   MQHighOps/Softmax/Softmax.cpp

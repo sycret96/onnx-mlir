@@ -23,6 +23,9 @@
 #include "mlir/IR/Dialect.h"
 #include "mlir/IR/OpDefinition.h"
 
+#include "src/Dialect/ONNX/ONNXOps/ShapeHelper.hpp"
+#include "src/Interface/ShapeInferenceOpInterface.hpp"
+
 namespace mlir {
 // Traits can be added here if needed in the future
 } // namespace mlir

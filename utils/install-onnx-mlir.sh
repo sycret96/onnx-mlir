@@ -12,6 +12,7 @@ cmake -G Ninja \
       -DONNX_MLIR_ENABLE_STABLEHLO=OFF \
       -DMLIR_DIR=${MLIR_DIR} \
       -DONNX_MLIR_ACCELERATORS="MQ" \
+      -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
       ..
 
 cmake --build . --target onnx-mlir
