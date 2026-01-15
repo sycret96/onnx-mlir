@@ -39,11 +39,11 @@ endif()
 
 # 7. 包含子目录 (MLIR 必须的模块)
 # TODO 逐个完成
-# add_subdirectory(Dialect)      # 定义 MQ Dialect
+add_subdirectory(Dialect)      # 定义 MQ Dialect
 # add_subdirectory(Conversion)   # 定义 ONNX -> MQ 的转换
 # add_subdirectory(Support)      # 辅助工具
 # add_subdirectory(Transform)    # 针对 MQ 的 Pass
-# add_subdirectory(Compiler)     # 编译插件逻辑
+add_subdirectory(Compiler)     # 编译插件逻辑
 # add_subdirectory(Runtime)      # 运行时支持
 
 # 8. 定义目标库 (核心目标)
@@ -72,8 +72,11 @@ add_onnx_mlir_library(OMMQAccel
   onnx
   OMAccelerator                # 必须链接，提供 Accelerator 基类
 #   OMMQCompilerUtils     # 在 Compiler 子目录定义的库
-#   OMMQOps               # 在 Dialect 子目录定义的库
+  OMMQHighOps                 # 在 Dialect 子目录定义的库
+#   OMMQLowOps
+
 #   根据转换路径添加对应的库 
-#   OMONNXToMQRewrite
-#   OMMQToLLVM
+#   TODO
+#   OMMQHighToMQLow
+#   OMMQLowToLLVM
 )
