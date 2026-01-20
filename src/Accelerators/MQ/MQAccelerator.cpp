@@ -43,24 +43,20 @@ uint64_t MQAccelerator::getVersionNumber() const {
 void MQAccelerator::addPasses(mlir::OwningOpRef<mlir::ModuleOp> &module,
     mlir::PassManager &pm, onnx_mlir::EmissionTargetType &emissionTarget,
     std::string outputNameNoExt) const {
-  // 以后在这里添加 MQ 特有的转换流水线
-  llvm::outs() << "MQ Accelerator passes are being added!\n";
+  addPassesMQ(module, pm, emissionTarget, outputNameNoExt);
 }
 
 void MQAccelerator::registerDialects(mlir::DialectRegistry &registry) const {
-  // 注册 MQ 的 Dialect，例如：registry.insert<mq::MQDialect>();
-  // LLVM_DEBUG(llvm::dbgs() << "Registering dialects for MQ accelerator\n");
-  llvm::outs() << "Registering MQHighDialect\n";
   registry.insert<mqhigh::MQHighDialect>();
-  // registry.insert<mq::MQLowDialect>();
 }
 
 void MQAccelerator::registerPasses(int optLevel) const {
-  // 注册命令行可用的 Pass
+  // Register passes if needed
 }
 
 void MQAccelerator::configurePasses() const {
-  // 统一配置 Pass 的参数
+  llvm::outs() << "Configuring MQ accelerator passes...\n";
+  configurePassesMQ();
 }
 
 // --- Lowering Hooks ---

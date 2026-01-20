@@ -21,21 +21,13 @@
 
 namespace onnx_mlir {
 
-// void addMemoryPooling(mlir::PassManager &pm);
+void addONNXToMQHighPasses(mlir::PassManager &pm);
 
-// void addONNXToZHighPasses(mlir::PassManager &pm);
+void addPassesMQ(mlir::OwningOpRef<mlir::ModuleOp> &module,
+    mlir::PassManager &pm, onnx_mlir::EmissionTargetType &emissionTarget,
+    std::string outputNameNoExt);
 
-// void addZHighToZLowPasses(mlir::PassManager &pm);
-
-// void normalizeMemRefsPasses(mlir::PassManager &pm);
-
-// void addAllToLLVMPasses(mlir::PassManager &pm);
-
-// void addPassesMQ(mlir::OwningOpRef<mlir::ModuleOp> &module,
-//     mlir::PassManager &pm, onnx_mlir::EmissionTargetType &emissionTarget,
-//     std::string outputNameNoExt);
-
-// void configurePassesMQ();
+void configurePassesMQ();
 
 } // namespace onnx_mlir
 #endif

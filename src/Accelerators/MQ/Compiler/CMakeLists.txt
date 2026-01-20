@@ -16,3 +16,22 @@ add_onnx_mlir_library(OMMQCompilerOptions
   ${MQ_ONNX_MLIR_SRC_ROOT}
   ${MQ_ONNX_MLIR_BIN_ROOT}
   )
+add_onnx_mlir_library(OMMQCompilerUtils
+  MQCompilerUtils.cpp
+
+  EXCLUDE_FROM_OM_LIBS
+
+  INCLUDE_DIRS PRIVATE
+  ${MQ_SRC_ROOT}
+  ${MQ_BIN_ROOT}
+  ${MQ_ONNX_MLIR_SRC_ROOT}
+  ${MQ_ONNX_MLIR_BIN_ROOT}
+
+  LINK_LIBS PUBLIC
+  OMMQCompilerOptions
+  OMCompilerPasses
+
+  ACCEL_INCLUDE_DIRS PRIVATE
+  ${MQ_ONNX_MLIR_SRC_ROOT}
+  ${MQ_ONNX_MLIR_BIN_ROOT}
+  )
