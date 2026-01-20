@@ -12,11 +12,32 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "mlir/Conversion/AffineToStandard/AffineToStandard.h"
+#include "mlir/Conversion/Passes.h"
+#include "mlir/Conversion/ReconcileUnrealizedCasts/ReconcileUnrealizedCasts.h"
+#include "mlir/Conversion/SCFToControlFlow/SCFToControlFlow.h"
+#include "mlir/Conversion/VectorToSCF/VectorToSCF.h"
+#include "mlir/Dialect/Bufferization/Transforms/Passes.h"
+#include "mlir/Dialect/MemRef/Transforms/Passes.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/Pass/PassManager.h"
 #include "mlir/Transforms/Passes.h"
+// #include "llvm/CodeGen/TargetPassConfig.h"
+// #include "llvm/IR/DataLayout.h"
+// #include "llvm/MC/TargetRegistry.h"
+// #include "llvm/Support/Debug.h"
+// #include "llvm/Support/TargetSelect.h"
+// #include "llvm/Target/TargetMachine.h"
 
+// #include "src/Accelerators/NNPA/Compiler/NNPACompilerOptions.hpp"
 #include "src/Accelerators/MQ/Compiler/MQCompilerUtils.hpp"
+#include "src/Accelerators/MQ/Pass/MQPasses.hpp"
+// #include "src/Accelerators/NNPA/Compiler/ZHighDisposableGarbageCollector.hpp"
+#include "src/Accelerators/MQ/Dialect/MQHigh/MQHighOps.hpp"
+// #include "src/Accelerators/NNPA/Dialect/ZLow/ZLowOps.hpp"
+// #include "src/Accelerators/NNPA/Pass/NNPAPasses.hpp"
+// #include "src/Accelerators/NNPA/Support/NNPALimit.hpp"
+
 #include "src/Compiler/CompilerOptions.hpp"
 #include "src/Compiler/CompilerPasses.hpp"
 #include "src/Pass/Passes.hpp"
@@ -43,17 +64,17 @@ void addONNXToMQHighPasses(mlir::PassManager &pm) {
 
   // 2. Core Lowering: ONNX -> MQHigh
   // This Pass does not exist yet. You need to implement it in src/Accelerators/MQ/Conversion
-  // pm.addPass(onnx_mlir::createONNXToMQHighPass());
+  pm.addPass(onnx_mlir::createONNXToMQHighPass());
   
   // 3. Shape Inference: Essential after dialect conversion
-//   pm.addNestedPass<func::FuncOp>(onnx_mlir::createShapeInferencePass());
+  pm.addNestedPass<func::FuncOp>(onnx_mlir::createShapeInferencePass());
 
   // 4. Post-lowering optimizations
-//   pm.addPass(mlir::createCanonicalizerPass());
-//   pm.addNestedPass<func::FuncOp>(onnx_mlir::createShapeInferencePass());
+  pm.addPass(mlir::createCanonicalizerPass());
+  pm.addNestedPass<func::FuncOp>(onnx_mlir::createShapeInferencePass());
   
   // 5. Constant Propagation (Optional but recommended)
-//   pm.addNestedPass<func::FuncOp>(onnx_mlir::createConstPropONNXToONNXPass());
+  pm.addNestedPass<func::FuncOp>(onnx_mlir::createConstPropONNXToONNXPass());
 }
 
 

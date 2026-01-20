@@ -4,10 +4,17 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
-#include "src/Accelerators/MQ/Compiler/MQCompilerUtils.hpp"
 #include "src/Accelerators/MQ/MQAccelerator.hpp"
+#include "src/Accelerators/MQ/Compiler/MQCompilerUtils.hpp"
+// #include "src/Accelerators/NNPA/Conversion/ONNXToZHigh/ONNXLegalityCheck.hpp"
+// #include "src/Accelerators/NNPA/Conversion/ZHighToZLow/ZHighToZLow.hpp"
+// #include "src/Accelerators/NNPA/Conversion/ZLowToLLVM/ZLowToLLVM.hpp"
 #include "src/Accelerators/MQ/Dialect/MQHigh/MQHighOps.hpp"
 // #include "src/Accelerators/MQ/Dialect/MQLow/MQLowOps.hpp"
+#include "src/Accelerators/MQ/MQAccelerator.hpp"
+#include "src/Accelerators/MQ/Pass/MQPasses.hpp"
+// #include "src/Accelerators/NNPA/Support/NNPALimit.hpp"
+#include "src/Compiler/CompilerOptions.hpp"
 
 #include <memory>
 
@@ -52,6 +59,9 @@ void MQAccelerator::registerDialects(mlir::DialectRegistry &registry) const {
 
 void MQAccelerator::registerPasses(int optLevel) const {
   // Register passes if needed
+  mlir::registerPass([]() -> std::unique_ptr<mlir::Pass> {
+    return onnx_mlir::createONNXToMQHighPass();
+  });
 }
 
 void MQAccelerator::configurePasses() const {
