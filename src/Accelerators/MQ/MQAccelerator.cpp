@@ -2,9 +2,12 @@
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/Transforms/Passes.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include "src/Accelerators/MQ/Compiler/MQCompilerUtils.hpp"
 #include "src/Accelerators/MQ/MQAccelerator.hpp"
+#include "src/Accelerators/MQ/Dialect/MQHigh/MQHighOps.hpp"
+// #include "src/Accelerators/MQ/Dialect/MQLow/MQLowOps.hpp"
 
 #include <memory>
 
@@ -46,6 +49,10 @@ void MQAccelerator::addPasses(mlir::OwningOpRef<mlir::ModuleOp> &module,
 
 void MQAccelerator::registerDialects(mlir::DialectRegistry &registry) const {
   // 注册 MQ 的 Dialect，例如：registry.insert<mq::MQDialect>();
+  // LLVM_DEBUG(llvm::dbgs() << "Registering dialects for MQ accelerator\n");
+  llvm::outs() << "Registering MQHighDialect\n";
+  registry.insert<mqhigh::MQHighDialect>();
+  // registry.insert<mq::MQLowDialect>();
 }
 
 void MQAccelerator::registerPasses(int optLevel) const {

@@ -15,7 +15,7 @@ cmake -G Ninja \
       -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
       ..
 
-cmake --build . --target onnx-mlir
+cmake --build . --target onnx-mlir onnx-mlir-opt
 # # Run lit tests:
 # export LIT_OPTS=-v
 # cmake --build . --target check-onnx-lit

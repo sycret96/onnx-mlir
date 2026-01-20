@@ -18,6 +18,8 @@
 include "mlir/IR/AttrTypeBase.td"
 include "mlir/IR/OpBase.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
+include "mlir/Interfaces/InferTypeOpInterface.td"
+
 include "src/Interface/ShapeHelperOpInterface.td"
 include "src/Interface/ShapeInferenceOpInterface.td"
 include "src/IR/AttrBase.td"
@@ -30,13 +32,23 @@ def MQHigh_Dialect : Dialect {
   let name = "mqhigh";
   let summary = "A high-level dialect for the ONNX MQ accelerator ISA.";
   let cppNamespace = "::onnx_mlir::mqhigh";
-  let useDefaultAttributePrinterParser = 1;
+
+  let hasConstantMaterializer = 0;
+  let hasNonDefaultDestructor = 0;
+  let hasOperationAttrVerify = 0;
+  let hasRegionArgAttrVerify = 0;
+  let hasRegionResultAttrVerify = 0;
+  let hasOperationInterfaceFallback = 0;
+  let useDefaultAttributePrinterParser = 0;
+  let useDefaultTypePrinterParser = 0;
+  let hasCanonicalizer = 0;
+  let isExtensible = 0;
+  let usePropertiesForAttributes = 1;
 }
 
 //===----------------------------------------------------------------------===//
 // MQHigh Attribute and Type
 //===----------------------------------------------------------------------===//
-// TODO
 
 //===----------------------------------------------------------------------===//
 // MQHigh Operations
@@ -55,10 +67,8 @@ class MQHigh_Op<string mnemonic, list<Trait> traits = []> :
 // Elementwise Operations
 
 // MatMul Operation
-def MQHighMatMulOp:MQHigh_Op<"MatMul", [Pure
-    // DeclareOpInterfaceMethods<ShapeInferenceOpInterface>,
-    // DeclareOpInterfaceMethods<ShapeHelperOpInterface>
-    ]> {
+def MQHighMatMulOp:MQHigh_Op<"MatMul", [Pure,
+    DeclareOpInterfaceMethods<InferTypeOpInterface>]> {
   let summary = "MQHigh MatMul operation";
   let description = [{
     MQHigh operation to perform a MatMul.
@@ -74,6 +84,7 @@ def MQHighMatMulOp:MQHigh_Op<"MatMul", [Pure
   );
 
   let hasVerifier = 1;
+  let hasCustomAssemblyFormat = 0;
 }
 
 // Pooling Operations
