@@ -3,4 +3,4 @@ echo "=== Test 1: InferShape ==="
 
 echo ""
 echo "=== Test 2: ONNX to MQHigh MatMul ==="
-/home/lifan/workspace/onnx-mlir/build/Release/bin/onnx-mlir-opt --onnx-to-mqhigh --maccel=MQ ./test_onnx2mqhigh_matmul.mlir
+/home/lifan/workspace/onnx-mlir/build/Release/bin/onnx-mlir-opt --convert-onnx-to-mqhigh --maccel=MQ ./test_onnx2mqhigh_matmul.mlir

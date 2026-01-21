@@ -62,6 +62,62 @@ def MQHigh_Dialect : Dialect {
 class MQHigh_Op<string mnemonic, list<Trait> traits = []> :
     Op<MQHigh_Dialect, mnemonic, traits>;
 
+
+// Pack Operation
+def MQHighPackOp : MQHigh_Op<"Pack", [Pure, 
+  DeclareOpInterfaceMethods<ReifyRankedShapedTypeOpInterface>]> {
+  let summary = "MQHigh Pack operation";
+  let description = [{
+    MQHigh operation to perform a Pack.
+    Packs the input tensor into a tiled layout according to the specified
+    inner tile sizes and layout type.
+  }];
+
+  let arguments = (ins
+      AnyRankedTensor:$input,
+      I64ArrayAttr:$inner_tile_sizes,
+      StrAttr:$layout_type
+  );
+
+  let results = (outs
+      AnyRankedTensor:$output
+  );
+
+  let assemblyFormat = [{
+      $input `layout` `(` $layout_type `)` `tiles` $inner_tile_sizes 
+      attr-dict `:` type($input) `->` type($output)
+  }];
+  
+  let hasVerifier = 1;
+}
+
+// Unpack Operation
+def MQHighUnpackOp : MQHigh_Op<"Unpack", [Pure, 
+  DeclareOpInterfaceMethods<ReifyRankedShapedTypeOpInterface>]> {
+  let summary = "MQHigh Unpack operation";
+  let description = [{
+    MQHigh operation to perform an Unpack.
+    Unpacks the tiled tensor back into its original logical layout 
+    according to the specified inner tile sizes and layout type.
+  }];
+
+  let arguments = (ins
+    AnyRankedTensor:$input,
+    I64ArrayAttr:$inner_tile_sizes,
+    StrAttr:$layout_type
+  );
+
+  let results = (outs
+    AnyRankedTensor:$output
+  );
+
+  let assemblyFormat = [{
+    $input `layout` `(` $layout_type `)` `tiles` $inner_tile_sizes 
+    attr-dict `:` type($input) `->` type($output)
+  }];
+  
+  let hasVerifier = 1;
+}
 // Conv2D Operation
 
 // Elementwise Operations
@@ -82,6 +138,13 @@ def MQHighMatMulOp:MQHigh_Op<"MatMul", [Pure,
   let results = (outs
     AnyTensor:$result
   );
+
+  let builders = [
+    OpBuilder<(ins "::mlir::Type":$resultType, "::mlir::Value":$lhs, "::mlir::Value":$rhs),
+    [{
+      build($_builder, $_state, resultType, lhs, rhs, /*bias=*/mlir::Value());
+    }]>
+  ];
 
   let hasVerifier = 1;
   let hasCustomAssemblyFormat = 0;

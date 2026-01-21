@@ -1,9 +1,10 @@
-# SPDX-License-Identifier: Apache-2.0
-
-add_onnx_mlir_library(OMMQToMQHigh
+add_onnx_mlir_rewriter(ONNXToMQHigh)
+add_onnx_mlir_library(OMONNXToMQHigh
   ONNXToMQHigh.cpp
 
   EXCLUDE_FROM_OM_LIBS
+  DEPENDS
+  OMONNXONNXToMQHighIncGen
 
   INCLUDE_DIRS PRIVATE
   ${MQ_SRC_ROOT}

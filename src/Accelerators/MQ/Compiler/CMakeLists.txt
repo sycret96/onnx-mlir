@@ -30,7 +30,7 @@ add_onnx_mlir_library(OMMQCompilerUtils
   LINK_LIBS PUBLIC
   OMMQCompilerOptions
   OMCompilerPasses
-  OMMQToMQHigh     # 新增：让 Compiler 需要链接转换Pass库
+  OMONNXToMQHigh     # 新增：让 Compiler 需要链接转换Pass库
 
   ACCEL_INCLUDE_DIRS PRIVATE
   ${MQ_ONNX_MLIR_SRC_ROOT}

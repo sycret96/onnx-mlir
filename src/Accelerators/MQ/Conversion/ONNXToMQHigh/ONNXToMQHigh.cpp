@@ -14,10 +14,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "src/Accelerators/MQ/Conversion/ONNXToMQHigh/ONNXToMQHigh.hpp"
+#include "mlir/Dialect/Arith/IR/Arith.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
+#include "mlir/IR/BuiltinTypes.h"
 #include "src/Accelerators/MQ/Dialect/MQHigh/MQHighOps.hpp"
 #include "src/Accelerators/MQ/Pass/MQPasses.hpp"
 #include "src/Dialect/ONNX/ONNXOps.hpp"
 #include "mlir/Transforms/DialectConversion.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace mlir;
 
@@ -26,27 +30,78 @@ namespace onnx_mlir {
 //===----------------------------------------------------------------------===//
 // ONNX to MQHigh Converson Patterns
 //===----------------------------------------------------------------------===//
-
-// Example Pattern: Convert ONNXMatMul directly to MQHighMatMul
-// This is the simplest MVP lowering without sticking/unsticking logic
 struct ONNXMatMulOpPattern : public OpConversionPattern<ONNXMatMulOp> {
   using OpConversionPattern<ONNXMatMulOp>::OpConversionPattern;
 
   LogicalResult matchAndRewrite(ONNXMatMulOp op, OpAdaptor adaptor,
-      ConversionPatternRewriter &rewriter) const override {
-    // TODO: add layout conversion here.
+                                ConversionPatternRewriter &rewriter) const override {
+    Location loc = op.getLoc();
     
-    mlir::Value noneValue;
-    rewriter.replaceOpWithNewOp<mqhigh::MQHighMatMulOp>(
-        op, op.getType(), adaptor.getA(), adaptor.getB(), noneValue);
-    
+    // 1. 获取输入类型
+    auto typeA = mlir::cast<RankedTensorType>(adaptor.getA().getType());
+    auto typeB = mlir::cast<RankedTensorType>(adaptor.getB().getType());
+    auto elementType = typeA.getElementType();
+
+    // 2. 根据数据类型确定分块参数
+    int64_t n_val = 1;
+    if (elementType.isBF16() || elementType.isF16()) n_val = 2;
+    else if (elementType.isInteger(8)) n_val = 4;
+
+    int64_t tile_m = 16;
+    int64_t tile_k = 4 * n_val;
+    int64_t tile_n = 64;
+
+    // 3. 计算分块后的 Tensor 形状
+    SmallVector<int64_t> shapeAPacked = {
+        typeA.getDimSize(0) / tile_m, typeA.getDimSize(1) / tile_k, tile_m, tile_k};
+    auto typeAPacked = RankedTensorType::get(shapeAPacked, elementType);
+
+    SmallVector<int64_t> shapeBPacked = {
+        typeB.getDimSize(0) / tile_k, typeB.getDimSize(1) / tile_n, tile_k, tile_n};
+    auto typeBPacked = RankedTensorType::get(shapeBPacked, elementType);
+
+    // 4. 使用 OpTy::create 替代 rewriter.create
+    // 插入 Pack A (Z_Z 布局)
+    auto innerTilesA = rewriter.getI64ArrayAttr({tile_m, tile_k});
+    auto packA = mqhigh::MQHighPackOp::create(
+        rewriter, loc, typeAPacked, adaptor.getA(), innerTilesA, rewriter.getStringAttr("Z_Z"));
+
+    // 插入 Pack B (N_N 布局)
+    auto innerTilesB = rewriter.getI64ArrayAttr({tile_k, tile_n});
+    auto packB = mqhigh::MQHighPackOp::create(
+        rewriter, loc, typeBPacked, adaptor.getB(), innerTilesB, rewriter.getStringAttr("N_N"));
+
+    // 5. 创建 MQHighMatMulOp，传入 4D 类型
+    SmallVector<int64_t, 4> matmulShape = {
+      typeA.getDimSize(0) / tile_m,
+      typeB.getDimSize(1) / tile_n, 
+      tile_m,
+      tile_n
+    };
+    auto matmulResType = RankedTensorType::get(matmulShape, elementType);
+    auto resMatMul = mqhigh::MQHighMatMulOp::create(
+      rewriter, loc, matmulResType, packA.getResult(), packB.getResult());
+
+    // 6. 插入 Unpack 操作，将 4D 输出转换回原始 2D 形状
+    auto unpackOp = mqhigh::MQHighUnpackOp::create(
+    rewriter, loc, 
+    op.getType(),           // 原始 2D Tensor 类型 (M x N)
+    resMatMul.getResult(),  // MatMul 的 4D 输出
+    rewriter.getI64ArrayAttr({tile_m, tile_n}), // 当初 Pack 到输出端的分块大小
+    rewriter.getStringAttr("Z_Z")               // 保持布局属性一致
+);
+
+    // 7. 替换原始 OP，使用 unpack 的结果
+    rewriter.replaceOp(op, unpackOp.getOutput());
+
     return success();
   }
 };
 
 
 void getONNXToMQHighOneOpPatterns(RewritePatternSet &patterns) {
-  patterns.insert<ONNXMatMulOpPattern>(patterns.getContext());
+  MLIRContext *context = patterns.getContext();
+  patterns.insert<ONNXMatMulOpPattern>(context);
 }
 
 //===----------------------------------------------------------------------===//
@@ -58,35 +113,59 @@ struct ONNXToMQHighLoweringPass
     : public PassWrapper<ONNXToMQHighLoweringPass, OperationPass<ModuleOp>> {
   MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(ONNXToMQHighLoweringPass)
 
-  StringRef getArgument() const override { return "onnx-to-mqhigh"; }
+  StringRef getArgument() const override { return "convert-onnx-to-mqhigh"; }
 
   StringRef getDescription() const override {
     return "Lower ONNX ops to MQHigh ops.";
   }
 
-  void runOnOperation() final {
+  void runOnOperation() final;
+};
+} // end anonymous namespace
+
+void ONNXToMQHighLoweringPass::runOnOperation() {
     ModuleOp module = getOperation();
     ConversionTarget target(getContext());
 
     // Define LEGAL dialects
-    target.addLegalDialect<mqhigh::MQHighDialect>();
-    target.addLegalDialect<ONNXDialect>(); // Keep ONNX legal for unsupported ops
+    target.addLegalDialect<mqhigh::MQHighDialect,
+        ONNXDialect,
+        func::FuncDialect,
+        arith::ArithDialect>();
 
-    // Define what needs to be converted
+    // TODO: fusion onnx.matmul + onnx.add -> mqhigh.matmul
+    // RewritePatternSet combinedPatterns(&getContext());
+    // onnx_mlir::getONNXToMQHighMultipleOpPatterns(combinedPatterns);
+    // (void)applyPatternsGreedily(module, std::move(combinedPatterns));    // It's ok to fail.
+
+    // 这不知道是干啥的 看起来是官方给的接口 可以直接用吗？
+    // Run the unknown dimension analysis to help check equality of unknown
+    // dimensions at compile time.
+    onnx_mlir::DimAnalysis dimAnalysis(module);
+    dimAnalysis.analyze();
+
+    // Single ONNX to MQHigh operation lowering.
+    RewritePatternSet patterns(&getContext());
+    onnx_mlir::getONNXToMQHighOneOpPatterns(patterns);
+    llvm::outs() << "getONNXToMQHighOneOpPatterns done.\n";
+
+    // This is to make sure we don't want to alloc any MemRef at this high-level
+    // representation.
+    target.addIllegalOp<mlir::memref::AllocOp>();
+    target.addIllegalOp<mlir::memref::DeallocOp>();
     target.addDynamicallyLegalOp<ONNXMatMulOp>([](ONNXMatMulOp op) {
-      // If we supported it, it's illegal (must be converted).
-      // If we didn't support it, it stays legal.
-      return false; // For MVP, we force convert all MatMuls
+      return false;
     });
 
-    RewritePatternSet patterns(&getContext());
-    getONNXToMQHighOneOpPatterns(patterns);
+    // TODO: ONNX ops to MQHigh dialect under specific conditions.
+    // When adding a new op, need to implement a method,
+    // for the op in ONNXLegalityCheck.cpp.
+    // getONNXToMQHighOneOpDynamicallyLegal(&target, &dimAnalysis);
 
     if (failed(applyPartialConversion(module, target, std::move(patterns))))
       signalPassFailure();
   }
-};
-} // end anonymous namespace
+
 
 std::unique_ptr<Pass> createONNXToMQHighPass() {
   return std::make_unique<ONNXToMQHighLoweringPass>();

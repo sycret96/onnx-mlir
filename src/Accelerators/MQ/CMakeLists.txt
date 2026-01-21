@@ -70,10 +70,10 @@ add_onnx_mlir_library(OMMQAccel
 
   LINK_LIBS PUBLIC
   onnx
-  OMAccelerator                # 必须链接，提供 Accelerator 基类
-  OMMQCompilerUtils     # 在 Compiler 子目录定义的库
+  OMMQCompilerUtils           # 在 Compiler 子目录定义的库
+  OMAccelerator
   OMMQHighOps                 # 在 Dialect 子目录定义的库
-  OMMQToMQHigh              # 新增：转换库
+  OMONNXToMQHigh              # 新增：转换库
 #   OMMQLowOps
 
 #   根据转换路径添加对应的库 
