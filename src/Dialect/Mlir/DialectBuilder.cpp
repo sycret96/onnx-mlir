@@ -1739,7 +1739,8 @@ memref::SubViewOp MemRefBuilder::subview(Value input,
 
 Value MemRefBuilder::dim(Value val, int64_t index) const {
   assert(index >= 0 && "Expecting a valid index");
-  return dim(val, arith::ConstantIndexOp::create(b(), loc(), index));
+  // return dim(val, arith::ConstantIndexOp::create(b(), loc(), index));
+  return dim(val, arith::ConstantIndexOp::create(b(), loc(), b().getIndexAttr(index)));
 }
 
 Value MemRefBuilder::dim(Value val, Value index) const {

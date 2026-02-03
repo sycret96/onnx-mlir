@@ -78,6 +78,10 @@ if(NOT ONNX_MLIR_ENABLE_PYRUNTIME_LIGHT)
   include(CTest)
   include(ExternalProject)
 endif()
+
+set(MLIR_DIR /home/lifan/workspace/buddy-mlir/llvm/build/lib/cmake/mlir)
+set(LLVM_DIR /home/lifan/workspace/buddy-mlir/llvm/build/lib/cmake/llvm)
+
 include(MLIR.cmake)
 
 # MLIR.cmake calls find_package(MLIR) which sets LLVM_MINIMUM_PYTHON_VERSION

@@ -474,9 +474,10 @@ Value IndexExprImpl::getValue() {
       // specs involving float and index calculations.
       float fval = floatLit;
       value = arith::ConstantFloatOp::create(getRewriter(), getLoc(),
-          getRewriter().getF32Type(), llvm::APFloat(fval));
+          getRewriter().getFloatAttr(getRewriter().getF32Type(), fval));
     } else {
-      value = arith::ConstantIndexOp::create(getRewriter(), getLoc(), intLit);
+      value = arith::ConstantIndexOp::create(getRewriter(), getLoc(),
+          getRewriter().getIndexAttr(intLit));
     }
   } else if (hasAffineExpr()) {
     // Has an affine expression: need to build a map, and then perform an
