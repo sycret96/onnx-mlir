@@ -41,14 +41,15 @@ struct ONNXFlattenOpLoweringToStablehlo : public ConversionPattern {
     assert(axis >= -rank && axis <= rank - 1);
     axis = axis >= 0 ? axis : rank + axis;
 
-    Value flattenDimFirst = arith::ConstantIndexOp::create(rewriter, loc, 1);
+    auto indexType = rewriter.getIndexType();
+    Value flattenDimFirst = arith::ConstantOp::create(rewriter, loc, indexType, rewriter.getIndexAttr(1));
     Value inputShape = shape::ShapeOfOp::create(rewriter, loc, input);
     for (int64_t i = 0; i < axis; i++) {
       Value dim = shape::GetExtentOp::create(rewriter, loc, inputShape, i);
       flattenDimFirst =
           shape::MulOp::create(rewriter, loc, flattenDimFirst, dim);
     }
-    Value flattenDimSecond = arith::ConstantIndexOp::create(rewriter, loc, 1);
+    Value flattenDimSecond = arith::ConstantOp::create(rewriter, loc, indexType, rewriter.getIndexAttr(1));
     for (int64_t i = axis; i < rank; i++) {
       Value dim = shape::GetExtentOp::create(rewriter, loc, inputShape, i);
       flattenDimSecond =

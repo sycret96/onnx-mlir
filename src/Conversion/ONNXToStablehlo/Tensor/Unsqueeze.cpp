@@ -65,7 +65,8 @@ struct ONNXUnsqueezeOpLoweringToStablehlo : public ConversionPattern {
     }
     for (int64_t i = 0, j = 0; i < newRank; i++) {
       if (isUnsqueezeDim[i]) {
-        Value indexValue = arith::ConstantIndexOp::create(rewriter, loc, 1);
+        auto indexType = rewriter.getIndexType();
+        Value indexValue = arith::ConstantOp::create(rewriter, loc, indexType, rewriter.getIntegerAttr(indexType, 1));
         newShape.push_back(indexValue);
       } else {
         Value dim = shape::GetExtentOp::create(rewriter, loc, dataShape, j);

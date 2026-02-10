@@ -649,42 +649,46 @@ Value MathBuilder::constant(Type type, double val) const {
   Type elementType = elementTypeOfScalarOrVector(type);
   TypeSwitch<Type>(elementType)
       .Case<Float16Type>([&](Type) {
+        auto floatType = b().getF16Type();
         constant =
-            arith::ConstantOp::create(b(), loc(), b().getF16FloatAttr(val));
+            arith::ConstantOp::create(b(), loc(), floatType, b().getF16FloatAttr(val));
       })
       .Case<Float32Type>([&](Type) {
+        auto floatType = b().getF32Type();
         constant =
-            arith::ConstantOp::create(b(), loc(), b().getF32FloatAttr(val));
+            arith::ConstantOp::create(b(), loc(), floatType, b().getF32FloatAttr(val));
       })
       .Case<Float64Type>([&](Type) {
+        auto floatType = b().getF64Type();
         constant =
-            arith::ConstantOp::create(b(), loc(), b().getF64FloatAttr(val));
+            arith::ConstantOp::create(b(), loc(), floatType, b().getF64FloatAttr(val));
       })
       .Case<IntegerType>([&](IntegerType elementType) {
         assert(val == static_cast<int64_t>(val) && "value is ambiguous");
         unsigned width = elementType.getWidth();
 
-        if (width == 1)
+        if (width == 1) {
+          auto boolType = b().getI1Type();
           constant =
-              arith::ConstantOp::create(b(), loc(), b().getBoolAttr(val != 0));
-        else {
+              arith::ConstantOp::create(b(), loc(), boolType, b().getBoolAttr(val != 0));
+        } else {
           // If unsigned, create a signless constant, then cast it to unsigned.
           if (elementType.isUnsignedInteger()) {
             Type signlessTy = b().getIntegerType(width);
-            constant = arith::ConstantOp::create(b(), loc(),
-                b().getIntegerAttr(signlessTy,
-                    APInt(width, static_cast<int64_t>(val), false, true)));
+            auto attr = b().getIntegerAttr(signlessTy,
+                APInt(width, static_cast<int64_t>(val), false, true));
+            constant = arith::ConstantOp::create(b(), loc(), signlessTy, attr);
             constant = castToUnsigned(constant, width);
           } else {
-            constant = arith::ConstantOp::create(b(), loc(),
-                b().getIntegerAttr(elementType,
-                    APInt(width, static_cast<int64_t>(val), false, true)));
+            auto attr = b().getIntegerAttr(elementType,
+                APInt(width, static_cast<int64_t>(val), false, true));
+            constant = arith::ConstantOp::create(b(), loc(), elementType, attr);
           }
         }
       })
       .Case<IndexType>([&](Type elementType) {
-        constant = arith::ConstantOp::create(
-            b(), loc(), b().getIntegerAttr(elementType, val));
+        auto attr = b().getIntegerAttr(elementType, val);
+        constant = arith::ConstantOp::create(b(), loc(), elementType, attr);
       })
       .Default([](Type) { llvm_unreachable("unsupported element type"); });
 
@@ -699,8 +703,9 @@ Value MathBuilder::constant(Type type, double val) const {
 }
 
 Value MathBuilder::constantIndex(int64_t val) const {
-  IntegerAttr constantAttr = b().getIntegerAttr(b().getIndexType(), val);
-  return arith::ConstantOp::create(b(), loc(), constantAttr);
+  auto indexType = b().getIndexType();
+  IntegerAttr constantAttr = b().getIntegerAttr(indexType, val);
+  return arith::ConstantOp::create(b(), loc(), indexType, constantAttr);
 }
 
 TypedAttr MathBuilder::negativeInfAttr(Type type) const {
@@ -1739,8 +1744,10 @@ memref::SubViewOp MemRefBuilder::subview(Value input,
 
 Value MemRefBuilder::dim(Value val, int64_t index) const {
   assert(index >= 0 && "Expecting a valid index");
-  // return dim(val, arith::ConstantIndexOp::create(b(), loc(), index));
-  return dim(val, arith::ConstantIndexOp::create(b(), loc(), b().getIndexAttr(index)));
+  auto indexType = b().getIndexType();
+  auto attr = b().getIntegerAttr(indexType, index);
+  Value constantIndex = arith::ConstantOp::create(b(), loc(), indexType, attr);
+  return dim(val, constantIndex);
 }
 
 Value MemRefBuilder::dim(Value val, Value index) const {

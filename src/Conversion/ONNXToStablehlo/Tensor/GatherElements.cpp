@@ -96,8 +96,9 @@ struct ONNXGatherElementsOpLoweringToStablehlo : public ConversionPattern {
       toConcatIndexShapeValueVec.push_back(
           shape::GetExtentOp::create(rewriter, loc, indicesShape, i));
     }
+    auto indexType = rewriter.getIndexType();
     toConcatIndexShapeValueVec.push_back(
-        arith::ConstantIndexOp::create(rewriter, loc, 1));
+        arith::ConstantOp::create(rewriter, loc, indexType, rewriter.getIntegerAttr(indexType, 1)));
     toConcatIndexShape = tensor::FromElementsOp::create(
         rewriter, loc, toConcatIndexShapeValueVec);
 

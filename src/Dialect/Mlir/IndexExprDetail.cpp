@@ -473,11 +473,13 @@ Value IndexExprImpl::getValue() {
       // Treat float types as f32 as this is what we currently have in the ONNX
       // specs involving float and index calculations.
       float fval = floatLit;
-      value = arith::ConstantFloatOp::create(getRewriter(), getLoc(),
-          getRewriter().getFloatAttr(getRewriter().getF32Type(), fval));
+      auto f32Type = getRewriter().getF32Type();
+      auto attr = getRewriter().getFloatAttr(f32Type, fval);
+      value = arith::ConstantOp::create(getRewriter(), getLoc(), f32Type, attr);
     } else {
-      value = arith::ConstantIndexOp::create(getRewriter(), getLoc(),
-          getRewriter().getIndexAttr(intLit));
+      auto indexType = getRewriter().getIndexType();
+      auto attr = getRewriter().getIntegerAttr(indexType, intLit);
+      value = arith::ConstantOp::create(getRewriter(), getLoc(), indexType, attr);
     }
   } else if (hasAffineExpr()) {
     // Has an affine expression: need to build a map, and then perform an

@@ -138,7 +138,8 @@ struct ONNXArgMaxOpLoweringToStablehlo : public ConversionPattern {
                 shape::GetExtentOp::create(rewriter, loc, inputShapeOp, i);
             dims.push_back(dim);
           } else {
-            Value dim = arith::ConstantIndexOp::create(rewriter, loc, 1);
+            auto indexType = rewriter.getIndexType();
+            Value dim = arith::ConstantOp::create(rewriter, loc, indexType, rewriter.getIntegerAttr(indexType, 1));
             dims.push_back(dim);
           }
         }

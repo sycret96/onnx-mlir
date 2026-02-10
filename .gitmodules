@@ -12,4 +12,4 @@
 	url = https://github.com/google/benchmark.git
 [submodule "third_party/stablehlo"]
 	path = third_party/stablehlo
-	url = https://github.com/openxla/stablehlo.git
+	url = https://github.com/sycret96/stablehlo.git
