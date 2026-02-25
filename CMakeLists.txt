@@ -79,8 +79,9 @@ if(NOT ONNX_MLIR_ENABLE_PYRUNTIME_LIGHT)
   include(ExternalProject)
 endif()
 
-set(MLIR_DIR /home/lifan/workspace/buddy-mlir/llvm/build/lib/cmake/mlir)
-set(LLVM_DIR /home/lifan/workspace/buddy-mlir/llvm/build/lib/cmake/llvm)
+# /home/lifan/workspace/copy_srda_compiler/srda_compiler/third-party/llvm-project/build
+set(MLIR_DIR /home/lifan/workspace/copy_srda_compiler/srda_compiler/third-party/llvm-project/build/lib/cmake/mlir)
+set(LLVM_DIR /home/lifan/workspace/copy_srda_compiler/srda_compiler/third-party/llvm-project/build/lib/cmake/llvm)
 
 include(MLIR.cmake)
 
