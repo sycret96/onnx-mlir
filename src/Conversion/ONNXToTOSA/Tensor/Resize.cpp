@@ -291,11 +291,9 @@ public:
     bool isBilinear = mode == "linear";
     bool isNearest = mode == "nearest";
     bool isNearestModeFloor = nearestMode == "floor";
-    llvm::StringRef resizeModeStr = isBilinear ? "BILINEAR" : "NEAREST_NEIGHBOR";
-    auto resizeAttr = rewriter.getStringAttr(resizeModeStr);
-    // mlir::tosa::ResizeType resizeMode =
-    //     isBilinear ? mlir::tosa::ResizeMode::BILINEAR
-    //                : mlir::tosa::ResizeMode::NEAREST_NEIGHBOR;
+    mlir::tosa::ResizeMode resizeMode =
+        isBilinear ? mlir::tosa::ResizeMode::BILINEAR
+                   : mlir::tosa::ResizeMode::NEAREST_NEIGHBOR;
 
     if (halfPixelSymmetric)
       return rewriter.notifyMatchFailure(op,
@@ -329,7 +327,7 @@ public:
             mlir::cast<ShapedType>(resultType).getElementType());
 
     Value resize = mlir::tosa::CreateOpAndInferShape<mlir::tosa::ResizeOp>(rewriter, loc,
-        newOutputType, newInput, scale, offset, border, resizeAttr);
+        newOutputType, newInput, scale, offset, border, resizeMode);
 
     // Convert output [N,OH,OW,OC] -> [N,OC,OH,OW]
     Value newOutput = tosaBuilder.transpose(resize, {0, 3, 1, 2});
